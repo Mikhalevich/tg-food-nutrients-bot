@@ -79,7 +79,7 @@ type foodNutrients struct {
 }
 
 func (fn foodNutrients) String() string {
-	list := []string{fmt.Sprintf("product name: %s\n", fn.Description)}
+	list := []string{fmt.Sprintf("product name: %s", fn.Description)}
 	for _, n := range fn.FN {
 		list = append(list, fmt.Sprintf("%s: %f %s", n.ND.Name, n.Amount, n.ND.UnitName))
 	}

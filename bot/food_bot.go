@@ -71,14 +71,21 @@ func (fb *FoodBot) processMessage(messageID int, chatID int64, text string) {
 	}
 
 	productName, err := fb.c.Convert(text)
+
+	defer func() {
+		if err != nil {
+			fb.sendMessage(messageID, chatID, "invalid input")
+		}
+	}()
+
 	if err != nil {
-		fb.l.Error("convert error: %v", err)
+		fb.l.Errorf("convert error: %v\n", err)
 		return
 	}
 
 	nutrients, err := fb.n.Nutrients(productName)
 	if err != nil {
-		fb.l.Error("nutrients error: %v", err)
+		fb.l.Errorf("nutrients error: %v\n", err)
 		return
 	}
 
