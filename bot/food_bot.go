@@ -12,7 +12,7 @@ type NameConverter interface {
 }
 
 type Nutrienter interface {
-	Nutrients(product string) (string, error)
+	Nutrients(product string, allNutrients bool) (string, error)
 }
 
 type FoodBot struct {
@@ -61,9 +61,16 @@ func (fb *FoodBot) RunBot() error {
 }
 
 func (fb *FoodBot) processMessage(messageID int, chatID int64, text string) {
-	if text == "/start" {
+	text = strings.TrimSpace(text)
+	if strings.HasPrefix(text, "/start") {
 		fb.sendMessage(messageID, chatID, "type product name and you will receive its nutrients")
 		return
+	}
+
+	allNutrients := false
+	if strings.HasPrefix(text, "/all ") {
+		text = strings.TrimPrefix(text, "/all ")
+		allNutrients = true
 	}
 
 	if strings.HasPrefix(text, "/") {
@@ -83,7 +90,7 @@ func (fb *FoodBot) processMessage(messageID int, chatID int64, text string) {
 		return
 	}
 
-	nutrients, err := fb.n.Nutrients(productName)
+	nutrients, err := fb.n.Nutrients(productName, allNutrients)
 	if err != nil {
 		fb.l.Errorf("nutrients error: %v\n", err)
 		return

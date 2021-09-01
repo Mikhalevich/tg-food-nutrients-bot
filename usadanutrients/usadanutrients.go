@@ -19,13 +19,13 @@ func New(apiKey string) *UsadaNutrients {
 	}
 }
 
-func (n *UsadaNutrients) Nutrients(product string) (string, error) {
+func (n *UsadaNutrients) Nutrients(product string, allNutrients bool) (string, error) {
 	id, err := n.productID(product)
 	if err != nil {
 		return "", err
 	}
 
-	fn, err := n.productNutrients(id)
+	fn, err := n.productNutrients(id, allNutrients)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +79,7 @@ type foodNutrients struct {
 }
 
 func (fn foodNutrients) String() string {
-	list := []string{fmt.Sprintf("product name: %s", fn.Description)}
+	list := []string{fmt.Sprintf("Product: %s", fn.Description)}
 	for _, n := range fn.FN {
 		list = append(list, fmt.Sprintf("%s: %f %s", n.ND.Name, n.Amount, n.ND.UnitName))
 	}
@@ -98,7 +98,7 @@ type nutrientDescription struct {
 	UnitName string `json:"unitName"`
 }
 
-func (n *UsadaNutrients) productNutrients(id int) (*foodNutrients, error) {
+func (n *UsadaNutrients) productNutrients(id int, allNutrients bool) (*foodNutrients, error) {
 	u, err := url.Parse(fmt.Sprintf("https://api.nal.usda.gov/fdc/v1/food/%d", id))
 	if err != nil {
 		return nil, err
@@ -106,10 +106,13 @@ func (n *UsadaNutrients) productNutrients(id int) (*foodNutrients, error) {
 
 	query := &url.Values{}
 	query.Add("api_key", n.key)
-	query.Add("nutrients", "203") // Protein
-	query.Add("nutrients", "204") // Fat
-	query.Add("nutrients", "205") // Carbohydrate
-	query.Add("nutrients", "208") // Energy
+
+	if !allNutrients {
+		query.Add("nutrients", "203") // Protein
+		query.Add("nutrients", "204") // Fat
+		query.Add("nutrients", "205") // Carbohydrate
+		query.Add("nutrients", "208") // Energy
+	}
 	u.RawQuery = query.Encode()
 
 	rsp, err := http.Get(u.String())
