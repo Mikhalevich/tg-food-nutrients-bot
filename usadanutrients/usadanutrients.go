@@ -79,11 +79,19 @@ func (n *UsadaNutrients) productID(product string) (int, error) {
 
 type foodNutrients struct {
 	Description string     `json:"description"`
+	BrandOwner  string     `json:"brandOwner"`
 	FN          []nutrient `json:"foodNutrients"`
 }
 
 func (fn foodNutrients) String() string {
-	list := []string{fmt.Sprintf("Product: %s", fn.Description)}
+	list := []string{
+		fmt.Sprintf("Product: %s", fn.Description),
+	}
+
+	if fn.BrandOwner != "" {
+		list = append(list, fmt.Sprintf("Brand: %s", fn.BrandOwner))
+	}
+
 	for _, n := range fn.FN {
 		list = append(list, fmt.Sprintf("%s: %f %s", n.ND.Name, n.Amount, n.ND.UnitName))
 	}
