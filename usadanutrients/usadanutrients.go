@@ -61,6 +61,10 @@ func (n *UsadaNutrients) productID(product string) (int, error) {
 
 	defer rsp.Body.Close()
 
+	if rsp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("invalid status code: %d", rsp.StatusCode)
+	}
+
 	var f foods
 	err = json.NewDecoder(rsp.Body).Decode(&f)
 	if err != nil {
@@ -121,6 +125,10 @@ func (n *UsadaNutrients) productNutrients(id int, allNutrients bool) (*foodNutri
 	}
 
 	defer rsp.Body.Close()
+
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("invalid status code: %d", rsp.StatusCode)
+	}
 
 	var f foodNutrients
 	if err := json.NewDecoder(rsp.Body).Decode(&f); err != nil {
