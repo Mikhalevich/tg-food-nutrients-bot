@@ -2,9 +2,12 @@ package bot
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,12 +26,21 @@ type foodBot struct {
 	l   *logrus.Logger
 }
 
+func async(fn func() error) <-chan error {
+	ch := make(chan error)
+
+	go func() {
+		ch <- fn()
+	}()
+
+	return ch
+}
+
 func Run(token string, c nameConverter, n nutrienter, l *logrus.Logger) error {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return fmt.Errorf("create bot api: %w", err)
 	}
-
 	//bot.Debug = true
 
 	fb := &foodBot{
@@ -38,17 +50,37 @@ func Run(token string, c nameConverter, n nutrienter, l *logrus.Logger) error {
 		l:   l,
 	}
 
-	return fb.run()
+	done := async(func() error {
+		l.Info("bot running...")
+		return fb.processUpdates()
+	})
+
+	terminate := make(chan os.Signal, 1)
+	signal.Notify(terminate, syscall.SIGINT, syscall.SIGTERM)
+
+loop:
+	for {
+		select {
+		case <-terminate:
+			signal.Stop(terminate)
+			l.Info("stopping bot...")
+			bot.StopReceivingUpdates()
+		case err = <-done:
+			l.Info()
+			break loop
+		}
+	}
+
+	l.Info("bot stopped...")
+
+	return err
 }
 
-func (fb *foodBot) run() error {
+func (fb *foodBot) processUpdates() error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	updates, err := fb.bot.GetUpdatesChan(u)
-	if err != nil {
-		return err
-	}
+	updates := fb.bot.GetUpdatesChan(u)
 
 	for update := range updates {
 		if update.Message == nil || update.Message.Text == "" {
