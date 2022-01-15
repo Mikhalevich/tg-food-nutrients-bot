@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file, and the cloud.google.com/go import, won't actually become part of
-// the resultant binary.
-// +build modhack
+//go:build linux
+// +build linux
 
-package translate
+package metadata
 
-// Necessary for safely adding multi-module repo. See: https://github.com/golang/go/wiki/Modules#is-it-possible-to-add-a-module-to-a-multi-module-repository
-import _ "cloud.google.com/go"
+import "syscall"
+
+func init() {
+	// Initialize syscallRetryable to return true on transient socket-level
+	// errors. These errors are specific to Linux.
+	syscallRetryable = func(err error) bool { return err == syscall.ECONNRESET || err == syscall.ECONNREFUSED }
+}
