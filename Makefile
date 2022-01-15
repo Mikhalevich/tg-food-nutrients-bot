@@ -1,6 +1,6 @@
 
 BOT_TOKEN=""
-GOOGLE_TRANSLATE_CRED_PATH="./google_client_secret.json"
+GOOGLE_TRANSLATE_CRED_PATH="./tg-translate-creds.json"
 USADA_API_KEY="VCJ27UGoY2XTbnw1DLrfRNArIirto9wB9NRvqZIP"
 
 all: build
