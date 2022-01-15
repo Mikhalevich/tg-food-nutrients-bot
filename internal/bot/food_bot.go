@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -82,6 +83,8 @@ func (fb *foodBot) processUpdates() error {
 
 	updates := fb.bot.GetUpdatesChan(u)
 
+	var wg sync.WaitGroup
+
 	for update := range updates {
 		if update.Message == nil || update.Message.Text == "" {
 			fb.l.Error("invalid message")
@@ -93,8 +96,15 @@ func (fb *foodBot) processUpdates() error {
 			"message": update.Message.Text,
 		}).Info("incoming message")
 
-		go fb.processMessage(update.Message.MessageID, update.Message.Chat.ID, update.Message.Text)
+		wg.Add(1)
+
+		go func(u tgbotapi.Update) {
+			defer wg.Done()
+			fb.processMessage(u.Message.MessageID, u.Message.Chat.ID, u.Message.Text)
+		}(update)
 	}
+
+	wg.Wait()
 
 	return nil
 }
