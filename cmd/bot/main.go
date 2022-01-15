@@ -49,24 +49,18 @@ func main() {
 
 	params, err := loadParams()
 	if err != nil {
-		logger.Error("load params error: %v", err)
+		logger.WithError(err).Error("load params error")
 		return
 	}
 
 	gc, err := googleconverter.New(params.GoogleTranslateCredPath, logger)
 	if err != nil {
-		logger.Error("google converter create error: %v", err)
+		logger.WithError(err).Error("google converter create error")
 		return
 	}
 
-	b, err := bot.NewFoodBot(params.BotToken, gc, usadanutrients.New(params.UsadaApiKey), logger)
-	if err != nil {
-		logger.Error("create bot error: %v", err)
-		return
-	}
-
-	if err := b.RunBot(); err != nil {
-		logger.Error("run bot error: %v", err)
+	if err := bot.Run(params.BotToken, gc, usadanutrients.New(params.UsadaApiKey), logger); err != nil {
+		logger.WithError(err).Error("run bot error")
 		return
 	}
 }

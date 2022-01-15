@@ -32,7 +32,10 @@ func (gc *GoogleConverter) Convert(text string) (string, error) {
 		return "", err
 	}
 
-	gc.l.Infof("detected %v language: %s\n", tag, text)
+	gc.l.WithFields(logrus.Fields{
+		"language": tag,
+		"text":     text,
+	}).Info("detected language")
 
 	if tag == language.English {
 		return text, nil

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -15,30 +16,32 @@ type Nutrienter interface {
 	Nutrients(product string, allNutrients bool) (string, error)
 }
 
-type FoodBot struct {
+type foodBot struct {
 	bot *tgbotapi.BotAPI
 	c   NameConverter
 	n   Nutrienter
 	l   *logrus.Logger
 }
 
-func NewFoodBot(token string, c NameConverter, n Nutrienter, l *logrus.Logger) (*FoodBot, error) {
+func Run(token string, c NameConverter, n Nutrienter, l *logrus.Logger) error {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("create bot api: %w", err)
 	}
 
 	//bot.Debug = true
 
-	return &FoodBot{
+	fb := &foodBot{
 		bot: bot,
 		c:   c,
 		n:   n,
 		l:   l,
-	}, nil
+	}
+
+	return fb.run()
 }
 
-func (fb *FoodBot) RunBot() error {
+func (fb *foodBot) run() error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -53,14 +56,18 @@ func (fb *FoodBot) RunBot() error {
 			continue
 		}
 
-		fb.l.Infof("incoming mesage with chat id = %d, message = %s\n", update.Message.Chat.ID, update.Message.Text)
+		fb.l.WithFields(logrus.Fields{
+			"chat_id": update.Message.Chat.ID,
+			"message": update.Message.Text,
+		}).Info("incoming message")
+
 		go fb.processMessage(update.Message.MessageID, update.Message.Chat.ID, update.Message.Text)
 	}
 
 	return nil
 }
 
-func (fb *FoodBot) processMessage(messageID int, chatID int64, text string) {
+func (fb *foodBot) processMessage(messageID int, chatID int64, text string) {
 	text = strings.TrimSpace(text)
 	if strings.HasPrefix(text, "/start") {
 		fb.sendMessage(messageID, chatID, "type product name and you will receive its nutrients")
@@ -86,20 +93,20 @@ func (fb *FoodBot) processMessage(messageID int, chatID int64, text string) {
 	}()
 
 	if err != nil {
-		fb.l.Errorf("convert error: %v\n", err)
+		fb.l.WithError(err).Error("convert error")
 		return
 	}
 
 	nutrients, err := fb.n.Nutrients(productName, allNutrients)
 	if err != nil {
-		fb.l.Errorf("nutrients error: %v\n", err)
+		fb.l.WithError(err).Error("nutrients error")
 		return
 	}
 
 	fb.sendMessage(messageID, chatID, nutrients)
 }
 
-func (fb *FoodBot) sendMessage(messageID int, chatID int64, text string) {
+func (fb *foodBot) sendMessage(messageID int, chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ReplyToMessageID = messageID
 	fb.bot.Send(msg)
