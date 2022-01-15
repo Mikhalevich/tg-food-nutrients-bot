@@ -36,12 +36,12 @@ func async(fn func() error) <-chan error {
 	return ch
 }
 
-func Run(token string, c nameConverter, n nutrienter, l *logrus.Logger) error {
+func Run(token string, c nameConverter, n nutrienter, l *logrus.Logger, debugEnabled bool) error {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return fmt.Errorf("create bot api: %w", err)
 	}
-	//bot.Debug = true
+	bot.Debug = debugEnabled
 
 	fb := &foodBot{
 		bot: bot,
@@ -78,7 +78,7 @@ loop:
 
 func (fb *foodBot) processUpdates() error {
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 5
 
 	updates := fb.bot.GetUpdatesChan(u)
 

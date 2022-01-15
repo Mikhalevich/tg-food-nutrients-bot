@@ -11,7 +11,7 @@ build:
 
 .PHONY: run
 run:
-	FB_TG_BOT_TOKEN=$(BOT_TOKEN) FB_GOOGLE_TRANSLATE_CRED_PATH=$(GOOGLE_TRANSLATE_CRED_PATH) FB_USADA_API_KEY=$(USADA_API_KEY) ./bin/bot
+	./bin/bot -token=$(BOT_TOKEN) -googlecred=$(GOOGLE_TRANSLATE_CRED_PATH) -usadakey=$(USADA_API_KEY)
 
 .PHONY: vendor
 vendor:
