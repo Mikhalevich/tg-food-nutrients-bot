@@ -8,22 +8,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type NameConverter interface {
+type nameConverter interface {
 	Convert(text string) (string, error)
 }
 
-type Nutrienter interface {
+type nutrienter interface {
 	Nutrients(product string, allNutrients bool) (string, error)
 }
 
 type foodBot struct {
 	bot *tgbotapi.BotAPI
-	c   NameConverter
-	n   Nutrienter
+	c   nameConverter
+	n   nutrienter
 	l   *logrus.Logger
 }
 
-func Run(token string, c NameConverter, n Nutrienter, l *logrus.Logger) error {
+func Run(token string, c nameConverter, n nutrienter, l *logrus.Logger) error {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return fmt.Errorf("create bot api: %w", err)
