@@ -125,26 +125,28 @@ func (fb *foodBot) processMessage(messageID int, chatID int64, text string) {
 		return
 	}
 
-	productName, err := fb.c.Convert(text)
-
-	defer func() {
-		if err != nil {
-			fb.sendMessage(messageID, chatID, "invalid input")
-		}
-	}()
-
-	if err != nil {
-		fb.l.WithError(err).Error("convert error")
-		return
-	}
-
-	nutrients, err := fb.n.Nutrients(productName, allNutrients)
+	nutrients, err := fb.nutrients(text, allNutrients)
 	if err != nil {
 		fb.l.WithError(err).Error("nutrients error")
+		fb.sendMessage(messageID, chatID, "invalid input")
 		return
 	}
 
 	fb.sendMessage(messageID, chatID, nutrients)
+}
+
+func (fb *foodBot) nutrients(food string, all bool) (string, error) {
+	food, err := fb.c.Convert(food)
+	if err != nil {
+		return "", fmt.Errorf("food convert error: %w", err)
+	}
+
+	nutrients, err := fb.n.Nutrients(food, all)
+	if err != nil {
+		return "", fmt.Errorf("nutrients error: %w", err)
+	}
+
+	return nutrients, nil
 }
 
 func (fb *foodBot) sendMessage(messageID int, chatID int64, text string) {
