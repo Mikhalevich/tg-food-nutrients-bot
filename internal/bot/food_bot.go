@@ -67,7 +67,6 @@ loop:
 			l.Info("stopping bot...")
 			bot.StopReceivingUpdates()
 		case err = <-done:
-			l.Info()
 			break loop
 		}
 	}

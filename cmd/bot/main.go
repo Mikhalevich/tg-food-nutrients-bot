@@ -1,11 +1,10 @@
 package main
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"os"
 
+	"github.com/jinzhu/configor"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/bot"
@@ -13,46 +12,17 @@ import (
 	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/usadanutrients"
 )
 
-type params struct {
-	BotToken                string
-	GoogleTranslateCredPath string
-	UsadaApiKey             string
-	Debug                   bool
+type config struct {
+	BotToken                string `yaml:"bot_token" required:"true"`
+	GoogleTranslateCredPath string `yaml:"google_transtale_cred_path"`
+	UsadaApiKey             string `yaml:"usada_api_key" required:"true"`
 }
 
-func (p params) validate() error {
-	if p.BotToken == "" {
-		return errors.New("telegram bot token is required")
-	}
-
-	if p.GoogleTranslateCredPath == "" {
-		return errors.New("google translate credentials is requred")
-	}
-
-	if p.UsadaApiKey == "" {
-		return errors.New("usada api key is required")
-	}
-
-	return nil
-}
-
-func loadParams() (*params, error) {
-	var p params
-	flag.StringVar(&p.BotToken, "token", "", "telegram bot token")
-	flag.StringVar(&p.GoogleTranslateCredPath, "googlecred", "", "path for google translate credentials file")
-	flag.StringVar(&p.UsadaApiKey, "usadakey", "", "usada api key https://fdc.nal.usda.gov/api-key-signup.html")
-
-	flag.Parse()
-
-	if err := p.validate(); err != nil {
-		return nil, fmt.Errorf("params validation: %w", err)
-	}
-
+func isDebugEnabled() bool {
 	if debug := os.Getenv("FB_DEBUG"); debug != "" {
-		p.Debug = true
+		return true
 	}
-
-	return &p, nil
+	return false
 }
 
 func main() {
@@ -62,19 +32,22 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	p, err := loadParams()
-	if err != nil {
-		logger.WithError(err).Error("load params error")
+	configFile := flag.String("config", "config/config.yaml", "telegram bot config file")
+	flag.Parse()
+
+	var cfg config
+	if err := configor.Load(&cfg, *configFile); err != nil {
+		logger.WithError(err).Error("failed to load bot config")
 		return
 	}
 
-	gc, err := googleconverter.New(p.GoogleTranslateCredPath, logger)
+	gc, err := googleconverter.New(cfg.GoogleTranslateCredPath, logger)
 	if err != nil {
 		logger.WithError(err).Error("google converter create error")
 		return
 	}
 
-	if err := bot.Run(p.BotToken, gc, usadanutrients.New(p.UsadaApiKey), logger, p.Debug); err != nil {
+	if err := bot.Run(cfg.BotToken, gc, usadanutrients.New(cfg.UsadaApiKey), logger, isDebugEnabled()); err != nil {
 		logger.WithError(err).Error("run bot error")
 		return
 	}

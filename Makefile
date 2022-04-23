@@ -1,8 +1,3 @@
-
-BOT_TOKEN=""
-GOOGLE_TRANSLATE_CRED_PATH="./tg-translate-creds.json"
-USADA_API_KEY="VCJ27UGoY2XTbnw1DLrfRNArIirto9wB9NRvqZIP"
-
 all: build
 
 .PHONY: build
@@ -11,7 +6,7 @@ build:
 
 .PHONY: run
 run:
-	./bin/bot -token=$(BOT_TOKEN) -googlecred=$(GOOGLE_TRANSLATE_CRED_PATH) -usadakey=$(USADA_API_KEY)
+	./bin/bot -config=config/config.yaml
 
 .PHONY: vendor
 vendor:
