@@ -1,0 +1,6 @@
+version: '3'
+services:
+  bot:
+    image: "mikhalevich/tg-food-nutrients-bot:v1.0.0"
+    ports:
+      - "80:8080"

@@ -8,6 +8,11 @@ build:
 run:
 	./bin/bot -config=config/config.yaml
 
+.PHONY: tag
+tag:
+	docker build -t mikhalevich/tg-food-nutrients-bot:$(TAG) -f ./script/docker/Dockerfile .
+	docker push mikhalevich/tg-food-nutrients-bot:$(TAG)
+
 .PHONY: vendor
 vendor:
 	go mod tidy
