@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/bot"
-	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/googleconverter"
+	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/nameconverter"
 	"github.com/Mikhalevich/tg-food-nutrients-bot/internal/usadanutrients"
 )
 
@@ -41,13 +41,13 @@ func main() {
 		return
 	}
 
-	gc, err := googleconverter.New(cfg.GoogleTranslateCredPath, logger)
+	converter, err := nameconverter.MakeConverter(cfg.GoogleTranslateCredPath, logger)
 	if err != nil {
 		logger.WithError(err).Error("google converter create error")
 		return
 	}
 
-	if err := bot.Run(cfg.BotToken, gc, usadanutrients.New(cfg.UsadaApiKey), logger, isDebugEnabled()); err != nil {
+	if err := bot.Run(cfg.BotToken, converter, usadanutrients.New(cfg.UsadaApiKey), logger, isDebugEnabled()); err != nil {
 		logger.WithError(err).Error("run bot error")
 		return
 	}
